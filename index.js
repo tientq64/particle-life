@@ -1,8 +1,11 @@
 const App = {
    oninit() {
-      this.atoms = [];
       this.groups = [];
-      this.gMaps = [];
+      this.gMaps = {};
+      this.width = screen.width;
+      this.height = screen.height;
+      this.halfWidth = this.width / 2;
+      this.halfHeight = this.height / 2;
       this.radius = 3;
       this.minRandomG = -10;
       this.maxRandomG = 8;
@@ -10,7 +13,6 @@ const App = {
       this.maxDistance = 160;
       this.alpha = 0.8;
       this.trail = 0.5;
-      this.PI_2 = Math.PI * 2;
       this.groupA = null;
       this.groupB = null;
       this.isShowPanel = true;
@@ -22,24 +24,38 @@ const App = {
       }
    },
 
-   oncreate() {
+   oncreate(vnode) {
       this.canvas = document.createElement('canvas');
-      this.viewerVnode.dom.appendChild(this.canvas);
-      this.updateSize();
-      setTimeout(this.updateSize, 100);
-
-      this.addGroup('#e11d48', 100);
-      this.addGroup('#d97706', 100);
-      this.addGroup('#16a34a', 100);
-      this.addGroup('#2563eb', 100);
-      this.addGroup('#475569', 100);
-      this.addGroup('#7c3aed', 100);
-      this.addGroup('#0891b2', 100);
-      this.addGroup('#c026d3', 100);
-      this.addGroup('#e2e8f0', 100);
-      this.render();
-      window.addEventListener('resize', this.updateSize);
+      this.canvas.width = this.width;
+      this.canvas.height = this.height;
+      vnode.dom.appendChild(this.canvas);
+      this.addGroup('#e11d48', 160);
+      this.addGroup('#d97706', 160);
+      this.addGroup('#16a34a', 160);
+      this.addGroup('#2563eb', 160);
+      this.addGroup('#475569', 160);
+      this.addGroup('#7c3aed', 160);
+      this.addGroup('#0891b2', 160);
+      this.addGroup('#c026d3', 160);
+      this.addGroup('#e2e8f0', 160);
       window.addEventListener('keydown', this.onkeydownGlobal);
+      const offscreenCanvas = this.canvas.transferControlToOffscreen();
+      this.worker = new Worker("render-worker.js");
+      this.worker.postMessage({
+         name: "startRender",
+         props: {
+            groups: this.groups,
+            gMaps: this.gMaps,
+            width: this.width,
+            height: this.height,
+            minDistance: this.minDistance,
+            maxDistance: this.maxDistance,
+            trail: this.trail,
+            alpha: this.alpha,
+            radius: this.radius,
+            offscreenCanvas: offscreenCanvas
+         }
+      }, [offscreenCanvas]);
       m.redraw();
    },
 
@@ -55,15 +71,10 @@ const App = {
          vy: 0
       };
       group.atoms.push(newAtom);
-      this.atoms.push(newAtom);
    },
 
    removeAtom(group) {
       const atom = group.atoms.pop();
-      if (atom) {
-         const index = this.atoms.indexOf(atom);
-         this.atoms.splice(index, 1);
-      }
    },
 
    addGroup(color, num) {
@@ -74,95 +85,17 @@ const App = {
       for (let i = 0; i < num; ++i) {
          this.addAtom(
             newGroup,
-            this.random(this.width * 0.25, this.width * 0.75),
-            this.random(this.height * 0.25, this.height * 0.75)
+            this.random(1, this.width - 1),
+            this.random(1, this.height - 1)
          );
       }
       this.gMaps[color] = {};
       this.groups.push(newGroup);
       for (const groupA of this.groups) {
          for (const groupB of this.groups) {
-            this.gMaps[groupA.color][groupB.color] ??= 0;
+            this.gMaps[groupA.color][groupB.color] ??= this.random(this.minRandomG, this.maxRandomG) / 10;
          }
       }
-   },
-
-   updateSize() {
-      this.width = this.viewerVnode.dom.offsetWidth;
-      this.height = this.viewerVnode.dom.offsetHeight;
-      this.halfWidth = this.width / 2;
-      this.halfHeight = this.height / 2;
-      this.canvas.width = this.width;
-      this.canvas.height = this.height;
-      this.g = this.canvas.getContext('2d');
-   },
-
-   rule(groupA, groupB) {
-      let g = this.gMaps[groupA.color][groupB.color];
-      for (let i = 0; i < groupA.atoms.length; ++i) {
-         const atomA = groupA.atoms[i];
-         let fx = 0;
-         let fy = 0;
-         for (let j = 0; j < groupB.atoms.length; ++j) {
-            const atomB = groupB.atoms[j];
-            if (atomA === atomB) continue;
-            let dx = atomA.x - atomB.x;
-            let dy = atomA.y - atomB.y;
-            let dxa = Math.abs(dx);
-            let dya = Math.abs(dy);
-            let dx2 = this.width - dxa;
-            let dy2 = this.height - dya;
-            if (dx2 < dxa) {
-               dx = dx2 * (dx > 0 ? -1 : 1);
-            }
-            if (dy2 < dya) {
-               dy = dy2 * (dy > 0 ? -1 : 1);
-            }
-            let d = Math.sqrt(dx * dx + dy * dy);
-            if (d >= this.minDistance && d <= this.maxDistance) {
-               let f = g * 1 / d;
-               fx += f * dx;
-               fy += f * dy;
-            }
-         }
-         atomA.vx = (atomA.vx + fx) * 0.5;
-         atomA.vy = (atomA.vy + fy) * 0.5;
-         atomA.x += atomA.vx;
-         atomA.y += atomA.vy;
-         if (atomA.x < 0) {
-            atomA.x += this.width;
-         } else if (atomA.x >= this.width) {
-            atomA.x -= this.width;
-         }
-         if (atomA.y < 0) {
-            atomA.y += this.height;
-         } else if (atomA.y >= this.height) {
-            atomA.y -= this.height;
-         }
-      }
-   },
-
-   render() {
-      for (let i = 0; i < this.groups.length; ++i) {
-         const groupA = this.groups[i];
-         for (let j = 0; j < this.groups.length; ++j) {
-            const groupB = this.groups[j];
-            this.rule(groupA, groupB);
-         }
-      }
-      this.g.globalAlpha = this.trail;
-      this.g.fillStyle = '#000';
-      this.g.fillRect(0, 0, this.width, this.height);
-      this.g.globalAlpha = this.alpha;
-      for (let i = 0; i < this.atoms.length; ++i) {
-         const atom = this.atoms[i];
-         this.g.beginPath();
-         this.g.fillStyle = atom.color;
-         this.g.arc(atom.x, atom.y, this.radius, 0, this.PI_2);
-         this.g.fill();
-         this.g.closePath();
-      }
-      requestAnimationFrame(this.render);
    },
 
    getBgColorByG(g) {
@@ -185,22 +118,33 @@ const App = {
       }
    },
 
+   emitProps(...propNames) {
+      const props = {};
+      for (const propName of propNames) {
+         props[propName] = this[propName];
+      }
+      this.worker.postMessage({
+         name: 'props',
+         props: props
+      });
+   },
+
    onmousedownGroupA(group, event) {
       let num = event.shiftKey ? 10 : 1;
-      for (let i = 0; i < num; i++) {
-         switch (event.button) {
-            case 0:
-               this.addAtom(
-                  group,
-                  this.random(this.width * 0.25, this.width * 0.75),
-                  this.random(this.height * 0.25, this.height * 0.75)
-               );
-               break;
-            case 2:
-               this.removeAtom(group);
-               break;
-         }
-      }
+      // for (let i = 0; i < num; i++) {
+      //    switch (event.button) {
+      //       case 0:
+      //          this.addAtom(
+      //             group,
+      //             this.random(this.width * 0.25, this.width * 0.75),
+      //             this.random(this.height * 0.25, this.height * 0.75)
+      //          );
+      //          break;
+      //       case 2:
+      //          this.removeAtom(group);
+      //          break;
+      //    }
+      // }
    },
 
    onmouseenterG(groupA, groupB) {
@@ -224,10 +168,12 @@ const App = {
                amount *= -1;
             }
             gMapsA[groupB.color] = Math.round((g + amount) * 10) / 10;
+            this.emitProps('gMaps');
             break;
 
          case 1:
             gMapsA[groupB.color] = 0;
+            this.emitProps('gMaps');
             break;
       }
    },
@@ -239,6 +185,7 @@ const App = {
             val[k2] = this.random(this.minRandomG, this.maxRandomG) / 10;
          }
       }
+      this.emitProps('gMaps');
    },
 
    resetGMaps() {
@@ -248,6 +195,7 @@ const App = {
             val[k2] = 0;
          }
       }
+      this.emitProps('gMaps');
    },
 
    onkeydownGlobal(event) {
@@ -266,7 +214,6 @@ const App = {
             case 'Space':
                if (codeOnce) {
                   this.isShowPanel = !this.isShowPanel;
-                  setTimeout(this.updateSize, 100);
                }
                break;
 
@@ -281,8 +228,8 @@ const App = {
    },
 
    view() {
-      return m('.flex.h-full',
-         m('.flex-0.p-3.w-72.h-full.bg-black.bg-opacity-50.absolute', {
+      return m('.h-full',
+         m('.absolute.p-3.w-72.h-full.bg-black.bg-opacity-50', {
             hidden: !this.isShowPanel
          },
             m('p', 'Lực tương tác:'),
@@ -412,6 +359,7 @@ const App = {
                      let value = Number(event.target.value);
                      if (isNaN(value)) return;
                      this.minDistance = value;
+                     this.emitProps('minDistance');
                   }
                }),
 
@@ -425,6 +373,7 @@ const App = {
                      let value = Number(event.target.value);
                      if (isNaN(value)) return;
                      this.maxDistance = value;
+                     this.emitProps('maxDistance');
                   }
                })
             ),
@@ -440,6 +389,7 @@ const App = {
                   let value = Number(event.target.value);
                   if (isNaN(value)) return;
                   this.radius = value;
+                  this.emitProps('radius');
                }
             }),
 
@@ -454,6 +404,7 @@ const App = {
                   let value = Number(event.target.value);
                   if (isNaN(value)) return;
                   this.alpha = value;
+                  this.emitProps('alpha');
                }
             }),
 
@@ -468,6 +419,7 @@ const App = {
                   let value = Number(event.target.value);
                   if (isNaN(value)) return;
                   this.trail = value;
+                  this.emitProps('trail');
                }
             }),
 
@@ -484,12 +436,11 @@ const App = {
                m('div', 'Lực < 0, A hút B')
             ),
             m('p.text-sm.text-gray-400',
-               'Có thể cuột chuột khi bấm vào ô input để tăng/giảm.'
+               m('div', 'Có thể cuột chuột khi bấm vào ô input để tăng/giảm.'),
+               m('div', 'Nhấn R để ngẫu nhiên lực.'),
+               m('div', 'Nhấn Space để bật/tắt bảng điều khiển này.')
             )
-         ),
-
-         this.viewerVnode =
-         m('.flex-1.h-full.overflow-hidden')
+         )
       );
    }
 };
