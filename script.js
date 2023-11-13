@@ -240,6 +240,14 @@ class App {
                         )
                      )
                   ),
+                  m('p.text-sm.text-gray-400',
+                     m('div', 'Chuột trái: Lực + 1'),
+                     m('div', 'Chuột phải: Lực - 1'),
+                     m('div', 'Chuột giữa: Lực = 0'),
+                     m('div', 'Đè Shift để tăng/giảm 10 lần'),
+                     m('div', 'Lực < 0, A hút vào B'),
+                     m('div', 'Lực > 0, A đẩy khỏi B')
+                  ),
 
                   m('.mt-2', 'Khoảng ngẫu nhiên khi tạo lực:'),
                   m('.flex.gap-2',
@@ -359,22 +367,16 @@ class App {
                      }
                   }),
 
-                  m('p.mt-2', 'Hướng dẫn:'),
+                  m('p.mt-2', 'Phím tắt:'),
                   m('p.text-sm.text-gray-400',
-                     m('div', 'Chuột trái: Lực + 1'),
-                     m('div', 'Chuột phải: Lực - 1'),
-                     m('div', 'Chuột giữa: Lực = 0'),
-                     m('div', 'Đè Shift để tăng/giảm 10 lần')
-                  ),
-                  m('p.text-sm.text-gray-400',
-                     m('div', 'Cột dọc là A, cột ngang là B'),
-                     m('div', 'Lực > 0, A đẩy B'),
-                     m('div', 'Lực < 0, A hút B')
-                  ),
-                  m('p.text-sm.text-gray-400',
-                     m('div', 'Có thể cuộn chuột khi bấm vào ô input để tăng/giảm.'),
                      m('div', 'Nhấn R để ngẫu nhiên lực.'),
                      m('div', 'Nhấn Space để bật/tắt bảng điều khiển này.')
+                  ),
+
+                  m('p.mt-2', 'Mẹo:'),
+                  m('p.text-sm.text-gray-400',
+                     m('div', 'Có thể cuộn chuột khi bấm vào ô input để tăng/giảm.'),
+                     m('div', 'Mở toàn màn hình để xem toàn bộ bản đồ.')
                   )
                )
             ),
