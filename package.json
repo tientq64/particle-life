@@ -1,0 +1,18 @@
+{
+   "name": "game-of-life",
+   "source": [
+      "index.html",
+      "worker.js"
+   ],
+   "targets": {
+      "default": {
+         "distDir": "public",
+         "publicUrl": ".",
+         "sourceMap": false
+      }
+   },
+   "browserslist": "> 0.5%, last 2 versions, not dead",
+   "devDependencies": {
+      "parcel": "latest"
+   }
+}

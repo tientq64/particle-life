@@ -16,7 +16,7 @@ class App {
 
    oncreate(vnode) {
       const offscreenCanvas = this.canvasVnode.dom.transferControlToOffscreen();
-      this.worker = new Worker("worker.js");
+      this.worker = new Worker(new URL('worker.js', location.href));
       this.worker.addEventListener('message', this.onmessageWorker);
       this.send("init", {
          width: this.width,
