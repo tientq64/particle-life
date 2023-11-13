@@ -71,10 +71,11 @@ const App = {
          vy: 0
       };
       group.atoms.push(newAtom);
+      return newAtom;
    },
 
    removeAtom(group) {
-      const atom = group.atoms.pop();
+      group.atoms.pop();
    },
 
    addGroup(color, num) {
@@ -131,20 +132,25 @@ const App = {
 
    onmousedownGroupA(group, event) {
       let num = event.shiftKey ? 10 : 1;
-      // for (let i = 0; i < num; i++) {
-      //    switch (event.button) {
-      //       case 0:
-      //          this.addAtom(
-      //             group,
-      //             this.random(this.width * 0.25, this.width * 0.75),
-      //             this.random(this.height * 0.25, this.height * 0.75)
-      //          );
-      //          break;
-      //       case 2:
-      //          this.removeAtom(group);
-      //          break;
-      //    }
-      // }
+      for (let i = 0; i < num; i++) {
+         switch (event.button) {
+            case 0:
+               const newAtom = this.addAtom(
+                  group,
+                  this.random(this.width * 0.25, this.width * 0.75),
+                  this.random(this.height * 0.25, this.height * 0.75)
+               );
+               this.worker.postMessage({
+                  name: 'addAtom',
+                  color: group.color,
+                  atom: newAtom
+               });
+               break;
+            case 2:
+               this.removeAtom(group);
+               break;
+         }
+      }
    },
 
    onmouseenterG(groupA, groupB) {
@@ -254,14 +260,14 @@ const App = {
                      }, groupA.atoms.length),
                      this.groups.map(groupB => {
                         var g;
-                        g = this.gMaps[groupB.color][groupA.color];
+                        g = this.gMaps[groupA.color][groupB.color];
                         return m('td.justify-center.items-center.text-xs.text-white', {
                            style: {
                               background: this.getBgColorByG(g)
                            },
                            onmouseenter: this.onmouseenterG.bind(this, groupA, groupB),
                            onmouseleave: this.onmouseleaveG,
-                           onmousedown: this.onmousedownG.bind(this, groupB, groupA)
+                           onmousedown: this.onmousedownG.bind(this, groupA, groupB)
                         },
                            Math.round(g * 10)
                         );
@@ -286,10 +292,10 @@ const App = {
                         }),
                         m('.ml-2.w-6.h-6.flex.justify-center.items-center.text-xs', {
                            style: {
-                              background: this.getBgColorByG(this.gMaps[this.groupB.color][this.groupA.color])
+                              background: this.getBgColorByG(this.gMaps[this.groupA.color][this.groupB.color])
                            }
                         },
-                           Math.round(this.gMaps[this.groupB.color][this.groupA.color] * 10)
+                           Math.round(this.gMaps[this.groupA.color][this.groupB.color] * 10)
                         ),
                      ),
                      m('.flex.items-center',
@@ -305,10 +311,10 @@ const App = {
                         }),
                         m('.ml-2.w-6.h-6.flex.justify-center.items-center.text-xs', {
                            style: {
-                              background: this.getBgColorByG(this.gMaps[this.groupA.color][this.groupB.color])
+                              background: this.getBgColorByG(this.gMaps[this.groupB.color][this.groupA.color])
                            }
                         },
-                           Math.round(this.gMaps[this.groupA.color][this.groupB.color] * 10)
+                           Math.round(this.gMaps[this.groupB.color][this.groupA.color] * 10)
                         )
                      )
                   )
@@ -436,7 +442,7 @@ const App = {
                m('div', 'Lực < 0, A hút B')
             ),
             m('p.text-sm.text-gray-400',
-               m('div', 'Có thể cuột chuột khi bấm vào ô input để tăng/giảm.'),
+               m('div', 'Có thể cuộn chuột khi bấm vào ô input để tăng/giảm.'),
                m('div', 'Nhấn R để ngẫu nhiên lực.'),
                m('div', 'Nhấn Space để bật/tắt bảng điều khiển này.')
             )

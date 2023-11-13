@@ -2,6 +2,8 @@ class RenderWorker {
    constructor() {
       this.PI_2 = Math.PI * 2;
       this.render = this.render.bind(this);
+      this.onmessageGlobal = this.onmessageGlobal.bind(this);
+      self.addEventListener('message', this.onmessageGlobal);
    }
 
    rule(groupA, groupB) {
@@ -71,20 +73,22 @@ class RenderWorker {
       }
       requestAnimationFrame(this.render);
    }
+
+   onmessageGlobal(event) {
+      const { data } = event;
+      switch (data.name) {
+         case 'startRender':
+            Object.assign(this, data.props);
+            this.g = this.offscreenCanvas.getContext('2d');
+            this.render();
+            break;
+         case 'props':
+            Object.assign(this, data.props);
+            break;
+         case 'addAtom':
+            break;
+      }
+   }
 }
 
 const worker = new RenderWorker();
-
-self.addEventListener('message', (event) => {
-   const { data } = event;
-   switch (data.name) {
-      case 'startRender':
-         Object.assign(worker, data.props);
-         worker.g = worker.offscreenCanvas.getContext('2d');
-         worker.render();
-         break;
-      case 'props':
-         Object.assign(worker, data.props);
-         break;
-   }
-});
