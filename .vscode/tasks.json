@@ -4,7 +4,7 @@
       {
          "label": "build",
          "type": "shell",
-         "command": "tailwindcss build -o tailwind.min.css --minify; rmdir -r public; parcel build; rmdir -r .parcel-cache",
+         "command": "npm run build",
          "presentation": {
             "clear": true,
             "reveal": "silent",
