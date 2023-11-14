@@ -5,6 +5,7 @@ class App {
       this.groupA = null;
       this.groupB = null;
       this.isShowPanel = true;
+      this.dragging = false;
       this.loaded = false;
 
       for (const k of Object.getOwnPropertyNames(Object.getPrototypeOf(this))) {
@@ -44,6 +45,26 @@ class App {
          name: name,
          args: args
       }]);
+   }
+
+   class(...vals) {
+      let res = [];
+      for (let val of vals) {
+         if (Array.isArray(val)) {
+            res.push(m.class(...val));
+         }
+         else if (val instanceof Object) {
+            for (let k in val) {
+               if (val[k]) {
+                  res.push(k);
+               }
+            }
+         }
+         else {
+            res.push(val);
+         }
+      }
+      return res.join(' ');
    }
 
    getBgColorByG(g) {
@@ -108,6 +129,21 @@ class App {
       }
    }
 
+   onpointerdownCanvas(event) {
+      event.target.setPointerCapture(event.pointerId);
+      this.dragging = true;
+   }
+
+   onpointermoveCanvas(event) {
+      if (this.dragging) {
+         this.sendCall('translate', event.movementX, event.movementY);
+      }
+   }
+
+   onlostpointercaptureCanvas(event) {
+      this.dragging = false;
+   }
+
    onmessageWorker(event) {
       const [name, data] = event.data;
       switch (name) {
@@ -154,9 +190,9 @@ class App {
 
    view() {
       return (
-         m('.h-full',
+         m('.flex.justify-end.items-center.h-full',
             this.loaded && (
-               m('.absolute.p-3.w-72.h-full.bg-black.bg-opacity-50', {
+               m('.absolute.left-0.p-3.w-72.h-full.overflow-auto.bg-black.bg-opacity-50.scrollbar-none', {
                   hidden: !this.isShowPanel
                },
                   m('p', 'Lực tương tác:'),
@@ -173,7 +209,7 @@ class App {
                      ),
                      this.groups.map(groupA =>
                         m('tr.h-7',
-                           m('th.justify-center.items-center.text-xs.font-normal.text-white', {
+                           m('th.justify-center.items-center.text-xs.font-normal.text-white.cursor-pointer', {
                               style: {
                                  background: groupA.color
                               },
@@ -181,7 +217,7 @@ class App {
                            }, groupA.atomsNum),
                            this.groups.map(groupB => {
                               const g = this.gMaps[groupA.color][groupB.color];
-                              return m('td.justify-center.items-center.text-xs.text-white', {
+                              return m('td.justify-center.items-center.text-xs.text-white.cursor-pointer', {
                                  style: {
                                     background: this.getBgColorByG(g)
                                  },
@@ -375,15 +411,18 @@ class App {
 
                   m('p.mt-2', 'Mẹo:'),
                   m('p.text-sm.text-gray-400',
-                     m('div', 'Có thể cuộn chuột khi bấm vào ô input để tăng/giảm.'),
-                     m('div', 'Mở toàn màn hình để xem toàn bộ bản đồ.')
+                     m('div', 'Mở toàn màn hình để xem được tốt nhất.')
                   )
                )
             ),
             this.canvasVnode =
-            m('canvas', {
+            m('canvas.max-w-full.max-h-full', {
+               class: this.dragging ? "cursor-grabbing" : "cursor-grab",
                width: this.width,
-               height: this.height
+               height: this.height,
+               onpointerdown: this.onpointerdownCanvas,
+               onpointermove: this.onpointermoveCanvas,
+               onlostpointercapture: this.onlostpointercaptureCanvas
             })
          )
       );
@@ -394,7 +433,4 @@ m.mount(document.body, App);
 
 window.addEventListener('contextmenu', event => {
    event.preventDefault();
-});
-
-document.body.addEventListener('wheel', () => {
 });

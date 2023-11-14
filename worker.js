@@ -100,6 +100,43 @@ class RenderWorker {
       this.sendProps('gMaps');
    }
 
+   translate(movementX, movementY) {
+      for (let i = 0; i < this.groups.length; ++i) {
+         const group = this.groups[i];
+         const groupAtoms = this.groupsAtoms[group.color];
+         for (let j = 0; j < groupAtoms.length; ++j) {
+            const atom = groupAtoms[j];
+            atom.x += movementX;
+            atom.y += movementY;
+         }
+      }
+   }
+
+   init() {
+      this.g = this.offscreenCanvas.getContext('2d');
+      this.addGroup('#e11d48', 160);
+      this.addGroup('#d97706', 160);
+      this.addGroup('#16a34a', 160);
+      this.addGroup('#2563eb', 160);
+      this.addGroup('#475569', 160);
+      this.addGroup('#7c3aed', 160);
+      this.addGroup('#0891b2', 160);
+      this.addGroup('#c026d3', 160);
+      this.addGroup('#e2e8f0', 160);
+      this.render();
+      this.send('loaded', {
+         radius: this.radius,
+         minRandomG: this.minRandomG,
+         maxRandomG: this.maxRandomG,
+         minDistance: this.minDistance,
+         maxDistance: this.maxDistance,
+         alpha: this.alpha,
+         trail: this.trail,
+         groups: this.groups,
+         gMaps: this.gMaps
+      });
+   }
+
    rule(groupA, groupB) {
       let g = this.gMaps[groupA.color][groupB.color];
       const groupAtomsA = this.groupsAtoms[groupA.color];
@@ -145,31 +182,6 @@ class RenderWorker {
             atomA.y -= this.height;
          }
       }
-   }
-
-   init() {
-      this.g = this.offscreenCanvas.getContext('2d');
-      this.addGroup('#e11d48', 160);
-      this.addGroup('#d97706', 160);
-      this.addGroup('#16a34a', 160);
-      this.addGroup('#2563eb', 160);
-      this.addGroup('#475569', 160);
-      this.addGroup('#7c3aed', 160);
-      this.addGroup('#0891b2', 160);
-      this.addGroup('#c026d3', 160);
-      this.addGroup('#e2e8f0', 160);
-      this.render();
-      this.send('loaded', {
-         radius: this.radius,
-         minRandomG: this.minRandomG,
-         maxRandomG: this.maxRandomG,
-         minDistance: this.minDistance,
-         maxDistance: this.maxDistance,
-         alpha: this.alpha,
-         trail: this.trail,
-         groups: this.groups,
-         gMaps: this.gMaps
-      });
    }
 
    render() {
