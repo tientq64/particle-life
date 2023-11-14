@@ -100,6 +100,22 @@ class RenderWorker {
       this.sendProps('gMaps');
    }
 
+   randomAtomsXY() {
+      for (let i = 0; i < this.groups.length; ++i) {
+         const group = this.groups[i];
+         const groupAtoms = this.groupsAtoms[group.color];
+         for (let j = 0; j < groupAtoms.length; ++j) {
+            const atom = groupAtoms[j];
+            atom.x = this.random(1, this.width - 1);
+            atom.y = this.random(1, this.height - 1);
+         }
+      }
+   }
+
+   clearScreen() {
+      this.g.clearRect(0, 0, this.width, this.height);
+   }
+
    translate(movementX, movementY) {
       for (let i = 0; i < this.groups.length; ++i) {
          const group = this.groups[i];

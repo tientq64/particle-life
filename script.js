@@ -15,7 +15,7 @@ class App {
       }
    }
 
-   oncreate(vnode) {
+   oncreate() {
       const offscreenCanvas = this.canvasVnode.dom.transferControlToOffscreen();
       this.worker = new Worker(new URL('worker.js', location.href));
       this.worker.addEventListener('message', this.onmessageWorker);
@@ -45,26 +45,6 @@ class App {
          name: name,
          args: args
       }]);
-   }
-
-   class(...vals) {
-      let res = [];
-      for (let val of vals) {
-         if (Array.isArray(val)) {
-            res.push(m.class(...val));
-         }
-         else if (val instanceof Object) {
-            for (let k in val) {
-               if (val[k]) {
-                  res.push(k);
-               }
-            }
-         }
-         else {
-            res.push(val);
-         }
-      }
-      return res.join(' ');
    }
 
    getBgColorByG(g) {
@@ -183,6 +163,18 @@ class App {
                   this.sendCall('randomGMaps');
                }
                break;
+
+            case 'KeyT':
+               if (codeOnce) {
+                  this.sendCall('randomAtomsXY');
+               }
+               break;
+
+            case 'KeyC':
+               if (codeOnce) {
+                  this.sendCall('clearScreen');
+               }
+               break;
          }
          m.redraw();
       }
@@ -196,9 +188,12 @@ class App {
                   hidden: !this.isShowPanel
                },
                   m('p', 'Lực tương tác:'),
-                  m('table.w-full.table-fixed.text-center',
+                  m('table.w-full.table-fixed.rounded.overflow-hidden.text-center',
                      m('tr.h-7',
-                        m('th.font-normal', 'AB'),
+                        m('th.font-normal',
+                           m("sub", "A"),
+                           m("sup", "B")
+                        ),
                         this.groups.map(group =>
                            m('th', {
                               style: {
@@ -209,7 +204,8 @@ class App {
                      ),
                      this.groups.map(groupA =>
                         m('tr.h-7',
-                           m('th.justify-center.items-center.text-xs.font-normal.text-white.cursor-pointer', {
+                           m('th.justify-center.items-center.text-xs.font-normal.cursor-pointer', {
+                              class: groupA.color == "#e2e8f0" ? "text-black" : "text-white",
                               style: {
                                  background: groupA.color
                               },
@@ -284,6 +280,18 @@ class App {
                      m('div', 'Lực < 0, A hút vào B'),
                      m('div', 'Lực > 0, A đẩy khỏi B')
                   ),
+                  m('.mt-1.flex.flex-wrap.gap-2',
+                     m('button.px-2.border.border-gray-400.hover:border-gray-200.rounded.bg-gray-600', {
+                        onclick: () => {
+                           this.sendCall('randomAtomsXY');
+                        }
+                     }, 'Ngẫu nhiên vị trí'),
+                     m('button.px-2.border.border-gray-400.hover:border-gray-200.rounded.bg-gray-600', {
+                        onclick: () => {
+                           this.sendCall('clearScreen');
+                        }
+                     }, 'Xóa màn hình')
+                  ),
 
                   m('.mt-2', 'Khoảng ngẫu nhiên khi tạo lực:'),
                   m('.flex.gap-2',
@@ -314,13 +322,13 @@ class App {
                      })
                   ),
 
-                  m('.mt-2.text-center',
-                     m('button.px-2.border.border-gray-400.hover:border-gray-300.rounded.bg-gray-600', {
+                  m('.mt-2.flex.flex-wrap.gap-2',
+                     m('button.px-2.border.border-gray-400.hover:border-gray-200.rounded.bg-gray-600', {
                         onclick: () => {
                            this.sendCall('randomGMaps');
                         }
                      }, 'Ngẫu nhiên lực'),
-                     m('button.px-2.border.border-gray-400.hover:border-gray-300.rounded.bg-gray-600.ml-2', {
+                     m('button.px-2.border.border-gray-400.hover:border-gray-200.rounded.bg-gray-600', {
                         onclick: () => {
                            this.sendCall('resetGMaps');
                         }
@@ -406,6 +414,8 @@ class App {
                   m('p.mt-2', 'Phím tắt:'),
                   m('p.text-sm.text-gray-400',
                      m('div', 'Nhấn R để ngẫu nhiên lực.'),
+                     m('div', 'Nhấn T để ngẫu nhiên vị trí.'),
+                     m('div', 'Nhấn C để xóa màn hình.'),
                      m('div', 'Nhấn Space để bật/tắt bảng điều khiển này.')
                   ),
 
